@@ -99,27 +99,6 @@ public class DragDropScene extends AbstractScene {
 		dragDropZone.setFillColor(new MTColor(255, 255, 255, 255));
 		dragDropZone.setNoFill(true);
 		dragDropZone.setPickable(false);
-		TapAndHoldProcessor tahp = new TapAndHoldProcessor(mtApp);
-		tahp.setMaxFingerUpDist(1000);
-		dragDropZone.registerInputProcessor(tahp);
-		dragDropZone.addGestureListener(TapAndHoldProcessor.class,
-				new IGestureEventListener() {
-					@Override
-					public boolean processGestureEvent(MTGestureEvent ge) {
-						System.out.println("gesture listener invoked");
-						if (MTGestureEvent.GESTURE_DETECTED == ge.getId()) {
-							setFingerDown();
-							System.out.println("Finger down");
-							return true;
-						} else if (MTGestureEvent.GESTURE_ENDED == ge.getId()) {
-							setFingerUp();
-							System.out.println("Finger up");
-							return true;
-						} else {
-							return false;
-						}
-					}
-				});
 		this.getCanvas().addChild(dragDropZone);
 
 		// Add text to the drag-drop area
@@ -131,9 +110,6 @@ public class DragDropScene extends AbstractScene {
 		text.setPositionRelativeToOther(dragDropZone, dragDropZone
 				.getCenterPointGlobal());
 		dragDropZone.addChild(text);
-
-		// Init gestures
-		initGestureProcessors(null);
 
 	}
 
@@ -150,7 +126,7 @@ public class DragDropScene extends AbstractScene {
 
 		// If we have defined a gesture we add it
 		if (points != null && points.size() > 0) {
-			// TODO: update MT4J code before going further
+			// # update MT4J code before going further
 			usp.getUnistrokeUtils().getRecognizer()
 					.addTemplate(UnistrokeGesture.CUSTOMGESTURE, points,
 							Direction.CLOCKWISE);
@@ -180,6 +156,7 @@ public class DragDropScene extends AbstractScene {
 								&& !ust.getGesture().equals(
 										UnistrokeGesture.NOGESTURE)) {
 							// TODO: Send the image using the server
+							System.out.println("Sending image!!!!!");
 						}
 						return false;
 					}
@@ -202,7 +179,7 @@ public class DragDropScene extends AbstractScene {
 			mti.removeAllGestureEventListeners(DragProcessor.class);
 			mti.removeAllGestureEventListeners(RotateProcessor.class);
 			mti.removeAllGestureEventListeners(ScaleProcessor.class);
-//			addUnistrokeProcessor(mti);
+			addUnistrokeProcessor(mti);
 		}
 	}
 
@@ -212,8 +189,9 @@ public class DragDropScene extends AbstractScene {
 	 */
 	private void setFingerUp() {
 		for (MTImage mti : images) {
-			addImageGestureListener(mti);
-//			removeUnistrokeProcessor(mti);
+			removeUnistrokeProcessor(mti);
+			mti.removeAllGestureEventListeners(TapAndHoldProcessor.class);
+			addImageDragGestureListener(mti);
 		}
 	}
 
@@ -233,16 +211,17 @@ public class DragDropScene extends AbstractScene {
 
 		// sets the last image
 		lastImageAdded = mti1;
+		images.add(mti1);
 
 		// Add gesture
-		addImageGestureListener(mti1);
+		addImageDragGestureListener(mti1);
 
 		// Add the downloaded image
 		this.registerPreDrawAction(new AddNodeActionThreadSafe(mti1, this
 				.getCanvas()));
 	}
 
-	private void addImageGestureListener(final MTImage mti) {
+	private void addImageDragGestureListener(final MTImage mti) {
 		mti.addGestureListener(DragProcessor.class,
 				new IGestureEventListener() {
 					@Override
@@ -250,12 +229,34 @@ public class DragDropScene extends AbstractScene {
 						if (ge.getId() == MTGestureEvent.GESTURE_ENDED) {
 							if (dragDropZone.containsPointGlobal(mti
 									.getCenterPointGlobal())) {
+								addImageHoldGestureListener(mti);
 								addUnistrokeProcessor(mti);
 								System.out.println("let's send it");
 							}
 							return true;
 						} else {
 							removeUnistrokeProcessor(mti);
+							return false;
+						}
+					}
+				});
+	}
+
+	private void addImageHoldGestureListener(final MTImage mti) {
+		TapAndHoldProcessor tahp = new TapAndHoldProcessor(mtApp);
+		tahp.setMaxFingerUpDist(1000);
+		mti.registerInputProcessor(tahp);
+		mti.addGestureListener(TapAndHoldProcessor.class,
+				new IGestureEventListener() {
+					@Override
+					public boolean processGestureEvent(MTGestureEvent ge) {
+						if (MTGestureEvent.GESTURE_DETECTED == ge.getId()) {
+							setFingerDown();
+							return true;
+						} else if (MTGestureEvent.GESTURE_ENDED == ge.getId()) {
+							setFingerUp();
+							return true;
+						} else {
 							return false;
 						}
 					}
