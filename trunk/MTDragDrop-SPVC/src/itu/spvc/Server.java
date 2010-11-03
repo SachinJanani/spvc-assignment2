@@ -52,7 +52,7 @@ public class Server extends Thread {
 				// listening for messages
 				if (inputStream.available() > 0) {
 					byte head = inputStream.readByte();
-					System.out.println(head);
+					System.out.println("Head = " + head);
 					// We check the message header
 					// 1 means image coming
 					// 2 means coordinates

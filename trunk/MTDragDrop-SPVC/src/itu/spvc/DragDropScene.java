@@ -1,10 +1,16 @@
 package itu.spvc;
 
+import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
+
+import javax.imageio.ImageIO;
 
 import org.mt4j.MTApplication;
 import org.mt4j.components.visibleComponents.font.FontManager;
@@ -54,6 +60,7 @@ public class DragDropScene extends AbstractScene {
 	private MTImage lastImageAdded;
 
 	MTRectangle dragDropZone;
+	Server server;
 
 	/**
 	 * Constructor
@@ -75,7 +82,7 @@ public class DragDropScene extends AbstractScene {
 		this.registerGlobalInputProcessor(new CursorTracer(mtApp, this));
 
 		// Start new server
-		new Server(this);
+		server = new Server(this);
 	}
 
 	/**
@@ -141,7 +148,7 @@ public class DragDropScene extends AbstractScene {
 	 * @param mti
 	 *            , the image in the drag and drop zone
 	 */
-	private void addUnistrokeProcessor(MTImage mti) {
+	private void addUnistrokeProcessor(final MTImage mti) {
 		mti.registerInputProcessor(usp);
 		mti.addGestureListener(UnistrokeProcessor.class,
 				new IGestureEventListener() {
@@ -157,6 +164,8 @@ public class DragDropScene extends AbstractScene {
 										UnistrokeGesture.NOGESTURE)) {
 							// TODO: Send the image using the server
 							System.out.println("Sending image!!!!!");
+							Image awtImage = mti.getImage().getTexture().getImage();
+							server.sendMessage("1");
 						}
 						return false;
 					}
