@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent" android:orientation="vertical">
+<TextView android:layout_height="wrap_content" android:layout_width="fill_parent" android:text="Server ip"></TextView>
+<EditText android:layout_height="wrap_content" android:id="@+id/ServerIpEditText" android:layout_width="fill_parent"></EditText>
+<TextView android:layout_height="wrap_content" android:layout_width="fill_parent" android:text="Server port"></TextView><EditText android:layout_height="wrap_content" android:layout_width="fill_parent" android:id="@+id/ServerPortEditText" android:inputType="number"></EditText><Button android:layout_height="wrap_content" android:id="@+id/SavePrefsButton" android:text="Save" android:layout_width="fill_parent"></Button>
+</LinearLayout>
