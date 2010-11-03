@@ -88,10 +88,14 @@ public class ImageDraggedDetector extends SimpleOnGestureListener {
 			// coordinates.
 			// Perform a normalization: send e2.getX()/frame_w and
 			// e2.getY()/frame_h values
+			
+			
+			
+			
 
 			// TODO: call the activity.imageMoved method with the appropriate
 			// values
-			activity.imageMoved((e2.getX()/frame_w), (e2.getY()/frame_h));
+			activity.imageMoved(normalize(frame_w, e2.getX()), normalize(frame_h, e2.getY()));
 			// and return true, since we handled the gesture
 			return true;
 		}
