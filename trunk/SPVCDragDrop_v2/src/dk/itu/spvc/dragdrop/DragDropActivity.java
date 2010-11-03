@@ -174,7 +174,6 @@ public class DragDropActivity extends Activity {
 							@Override
 							public void onResult(Boolean res) {
 								if (res) {
-									// TODO: The following method returns error
 									frame.addView(dragged);
 								}
 							}
