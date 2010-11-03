@@ -43,7 +43,6 @@
 	<classpathentry kind="lib" path="lib/libTUIO.jar"/>
 	<classpathentry kind="lib" path="lib/log4j-1.2.8.jar"/>
 	<classpathentry kind="lib" path="lib/mri.jar"/>
-	<classpathentry kind="lib" path="lib/mt4j.jar"/>
 	<classpathentry kind="lib" path="lib/muito_blobtracking.jar"/>
 	<classpathentry kind="lib" path="lib/opengl.jar"/>
 	<classpathentry kind="lib" path="lib/pdf-transcoder.jar"/>
