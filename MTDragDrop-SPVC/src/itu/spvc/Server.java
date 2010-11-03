@@ -91,7 +91,9 @@ public class Server extends Thread {
 						// TODO:
 						// We get x and y coordinates from the move commands
 						// We move the latest image added to the server
-						// scene.moveImage(x,y);
+						float x = inputStream.readFloat();
+						float y = inputStream.readFloat();
+						scene.moveImage(x, y);
 					} else
 						break;
 				}
