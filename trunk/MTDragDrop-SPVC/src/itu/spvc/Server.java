@@ -93,6 +93,11 @@ public class Server extends Thread {
 						// We move the latest image added to the server
 						float x = inputStream.readFloat();
 						float y = inputStream.readFloat();
+						System.out.println("float x: " + x + "\n\n" + 
+								"float y: " + y);
+						
+						
+						
 						scene.moveImage(x, y);
 					} else
 						break;
