@@ -1,16 +1,20 @@
 package itu.spvc;
 
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
 
 import org.mt4j.MTApplication;
 import org.mt4j.components.visibleComponents.font.FontManager;
@@ -163,9 +167,31 @@ public class DragDropScene extends AbstractScene {
 								&& !ust.getGesture().equals(
 										UnistrokeGesture.NOGESTURE)) {
 							// TODO: Send the image using the server
-							System.out.println("Sending image!!!!!");
-							Image awtImage = mti.getImage().getTexture().getImage();
-							server.sendMessage("1");
+							System.out.println("Sending image...");
+							Image img = mti.getImage().getTexture().getImage();
+							int h = img.getHeight(mtApp);
+							int w = img.getWidth(mtApp);
+							BufferedImage bi = new BufferedImage(w, h,
+									BufferedImage.TYPE_INT_RGB);
+							Graphics2D g = bi.createGraphics();
+							g.drawImage(img, 0, 0, mtApp);
+							g.dispose();
+							ByteArrayOutputStream bas = new ByteArrayOutputStream();
+							try {
+								ImageIO.write(bi, "jpg", bas);
+								byte[] bytes = bas.toByteArray();
+								synchronized (server.out) {
+									server.sendMessage("1");
+									server.out.writeInt(bytes.length);
+									System.out.println(bytes.length);
+									server.out.write(bytes);
+									System.out.println(bytes);
+									server.out.flush();
+								}
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
 						}
 						return false;
 					}
