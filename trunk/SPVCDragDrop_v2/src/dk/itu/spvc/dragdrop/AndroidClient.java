@@ -172,7 +172,7 @@ public class AndroidClient {
 				: new OnImage() {
 					@Override
 					public void onImage(byte[] imageBytes) {
-						Log.d("EMPTY_IMGCALLBACK", "recevied image of length: "
+						Log.d("EMPTY_IMGCALLBACK", "received image of length: "
 								+ imageBytes.length);
 					}
 				};
