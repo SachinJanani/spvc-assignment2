@@ -132,10 +132,12 @@ public class Client {
 		by the float y.
 		Finally, flush the output stream
 		*/
+		synchronized (dos) {
 		dos.writeByte(2);
 		dos.writeFloat(x);
 		dos.writeFloat(y);
 		dos.flush();
+		}
 	}
 
 	/**
