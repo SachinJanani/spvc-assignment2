@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * "Android-friendly" network client.
@@ -15,7 +17,7 @@ import android.util.Log;
  *
  */
 public class AndroidClient {
-	
+	static final String DEBUG_TAG = "IMAGER";	
 	/**
 	 * Callback interface
 	 * @author frza
@@ -45,11 +47,14 @@ public class AndroidClient {
 	class ReceiveDataAsyncTask extends AsyncTask<Client,Void,Void> {
 		@Override
 		protected Void doInBackground(Client... params) {
+			Log.v("IMAGER_01", "doInBackground method");
 			Client c = params[0];
 			
 			while(true) {
 				try {
 					byte cmd = c.nextCommand();
+					Log.v("IMAGER", "NextCommand(): " + cmd);
+														
 					if(cmd == 0){break;}
 					switch(cmd) {
 					case (byte)1: imageCallback.onImage( c.readImage() ); break;

@@ -12,6 +12,8 @@ import java.net.Socket;
 import android.util.Log;
 
 public class Client {
+	
+	static final String DEBUG_TAG = "IMAGER";
 
 	public static byte[] getBytesFromInputStream(InputStream is)
 			throws IOException {
@@ -88,6 +90,7 @@ public class Client {
 		//the len of the image
 		int len = dis.readInt();
 		byte[] out = new byte[len];
+		Log.v("IMAGER", "Byte: " + out);
 		
 		int soFar = 0;
 		
