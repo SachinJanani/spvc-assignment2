@@ -98,12 +98,12 @@ public class DragDropScene extends AbstractScene {
 		this.getCanvas().removeAllChildren();
 
 		// Add images
-		Image image1 = Toolkit.getDefaultToolkit().createImage(
-				imageFolder + "Mountain_Pass.jpg");
-		Image image2 = Toolkit.getDefaultToolkit().createImage(
-				imageFolder + "sea-turtle.jpg");
-		addImage(image1);
-		addImage(image2);
+		// Image image1 = Toolkit.getDefaultToolkit().createImage(
+		// imageFolder + "Mountain_Pass.jpg");
+		// Image image2 = Toolkit.getDefaultToolkit().createImage(
+		// imageFolder + "sea-turtle.jpg");
+		// addImage(image1);
+		// addImage(image2);
 
 		// Add drag-drop area
 		dragDropZone = new MTRectangle(0, 0, 420, 768, mtApp);
