@@ -188,10 +188,12 @@ public class DragDropScene extends AbstractScene {
 									System.out.println(bytes);
 									server.out.flush();
 								}
+								mti.removeFromParent();
+								images.add(mti);
+								setFingerUp();
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
-
 						}
 						return false;
 					}
