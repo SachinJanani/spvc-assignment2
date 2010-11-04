@@ -70,36 +70,42 @@ public class Client {
 		this.dos = new DataOutputStream(sock.getOutputStream());
 		this.dis = new DataInputStream(sock.getInputStream());
 	}
-	
+
 	/**
 	 * Call this blocking method to read the next available command
+	 * 
 	 * @return
 	 * @throws IOException
 	 */
-	public byte nextCommand() throws IOException {
-		return this.dis.readByte();
+	public byte nextCommand() {
+		byte b = 0;
+		try {
+			b = this.dis.readByte();
+		} catch (IOException e) {
+		}
+		return b;
 	}
-	
+
 	/**
-	 * if nextCommand() returns 1, call this method
-	 * to read the bytes of the sent image
+	 * if nextCommand() returns 1, call this method to read the bytes of the
+	 * sent image
+	 * 
 	 * @return
 	 * @throws IOException
 	 */
 	public byte[] readImage() throws IOException {
-		//the len of the image
+		// the len of the image
 		int len = dis.readInt();
 		byte[] out = new byte[len];
-		Log.v("IMAGER", "Byte: " + out);
-		
+
 		int soFar = 0;
-		
-		while(len != soFar) {
-			//got to read all the image bytes
+
+		while (len != soFar) {
+			// got to read all the image bytes
 			int read = dis.read(out, soFar, (len - soFar));
-			if(read < 0) {
-				Log.d("CLIENT","stream ended!!");
-				if(len != soFar) {
+			if (read < 0) {
+				Log.d("CLIENT", "stream ended!!");
+				if (len != soFar) {
 					throw new IOException("Stream ended");
 				}
 			}
@@ -107,11 +113,12 @@ public class Client {
 		}
 		return out;
 	}
-	
+
 	/**
-	 * if nextCommand() returns 2, call this method
-	 * to read the coordinates
-	 * @return the normalized coordinates array: index 0 identifies the X axis, 1 identifies the Y axis
+	 * if nextCommand() returns 2, call this method to read the coordinates
+	 * 
+	 * @return the normalized coordinates array: index 0 identifies the X axis,
+	 *         1 identifies the Y axis
 	 * @throws IOException
 	 */
 	public float[] readCoord() throws IOException {
@@ -123,38 +130,39 @@ public class Client {
 
 	/**
 	 * Send the x,y coordinates to the server
+	 * 
 	 * @param x
 	 * @param y
 	 * @throws IOException
 	 */
 	public void sendCoordinates(float x, float y) throws IOException {
-		//# implement me
+		// # implement me
 		/*
-		send the byte (NOT int) 2 first, as this will identify that we
-		are sending a pair coordinate. Then write the float x first, followed
-		by the float y.
-		Finally, flush the output stream
-		*/
+		 * send the byte (NOT int) 2 first, as this will identify that we are
+		 * sending a pair coordinate. Then write the float x first, followed by
+		 * the float y. Finally, flush the output stream
+		 */
 		synchronized (dos) {
-		dos.writeByte(2);
-		dos.writeFloat(x);
-		dos.writeFloat(y);
-		dos.flush();
+			dos.writeByte(2);
+			dos.writeFloat(x);
+			dos.writeFloat(y);
+			dos.flush();
 		}
 	}
 
 	/**
 	 * Send the all bytes in the inputstream to the server. Must be an image
+	 * 
 	 * @param is
 	 * @throws IOException
 	 */
 	public void sendImage(InputStream is) throws IOException {
-		//# implement me
+		// # implement me
 		/*
-		write the byte 1, then get all the bytes from the input stream
-		passed as parameter. Write the length of the byte array, followed
-		by the byte array itself. Finally flush the output stream
-		*/
+		 * write the byte 1, then get all the bytes from the input stream passed
+		 * as parameter. Write the length of the byte array, followed by the
+		 * byte array itself. Finally flush the output stream
+		 */
 		dos.writeByte(1);
 		byte[] bytes = getBytesFromInputStream(is);
 		dos.writeInt(bytes.length);
@@ -164,6 +172,7 @@ public class Client {
 
 	/**
 	 * Send the contents of the file to the server. Must be an image
+	 * 
 	 * @param imgFile
 	 * @throws IOException
 	 */
@@ -182,6 +191,7 @@ public class Client {
 
 	/**
 	 * Close the connection to the server
+	 * 
 	 * @throws IOException
 	 */
 	public void close() throws IOException {
