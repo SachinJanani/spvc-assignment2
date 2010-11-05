@@ -44,7 +44,6 @@ public class Server extends Thread {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 		try {
 			while (true) {
 				// System.out.println("Waiting...");
