@@ -268,7 +268,6 @@ public class DragDropScene extends AbstractScene {
 									.getCenterPointGlobal())) {
 								addImageHoldGestureListener(mti);
 								addUnistrokeProcessor(mti);
-								System.out.println("let's send it");
 							}
 							return true;
 						} else {
