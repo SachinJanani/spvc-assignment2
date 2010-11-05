@@ -94,9 +94,6 @@ public class Server extends Thread {
 						float y = inputStream.readFloat();
 						System.out.println("float x: " + x + "\n\n" + 
 								"float y: " + y);
-						
-						
-						
 						scene.moveImage(x, y);
 					} else
 						break;
