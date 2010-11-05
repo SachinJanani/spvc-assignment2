@@ -1,6 +1,7 @@
 package dk.itu.spvc.dragdrop;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.view.MenuItem;
 import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.Gallery;
+import android.widget.Toast;
 import dk.itu.spvc.dragdrop.AndroidClient.OnResult;
 
 /**
@@ -167,7 +169,7 @@ public class DragDropActivity extends Activity {
 			dragged = new PlayAreaView(this, imageView.resourceId, 100, 100);
 			try {
 				if (client == null) {
-					client = new AndroidClient(serverIp, serverPort);
+					client = new AndroidClient(serverIp, serverPort, this);
 				}
 				client.sendImage(imageView.getImageInputStream(),
 						new OnResult<Boolean>() {

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -161,19 +162,24 @@ public class AndroidClient {
 	 * @param serverPort
 	 * @throws IOException
 	 */
-	public AndroidClient(String serverIp, int serverPort) throws IOException {
-		this(serverIp, serverPort, null, null);
+	public AndroidClient(String serverIp, int serverPort, Activity dragdrop) throws IOException {
+		this(serverIp, serverPort, null, null, dragdrop);
 	}
 
 	public AndroidClient(String serverIp, int serverPort,
-			OnImage imageCallback, OnCoords coordsCallback) throws IOException {
+			OnImage imageCallback, OnCoords coordsCallback, Activity dragdrop) throws IOException {
 		this.client = new Client(serverIp, serverPort);
+		Context context = dragdrop.getApplicationContext();
+		CharSequence text = "Image received from the surface!";
+		int duration = Toast.LENGTH_SHORT;
+		final Toast toast = Toast.makeText(context, text, duration);
 		this.imageCallback = imageCallback != null ? imageCallback
 				: new OnImage() {
 					@Override
 					public void onImage(byte[] imageBytes) {
 						Log.d("EMPTY_IMGCALLBACK", "received image of length: "
 								+ imageBytes.length);
+						toast.show();
 					}
 				};
 		this.coordsCallback = coordsCallback != null ? coordsCallback
