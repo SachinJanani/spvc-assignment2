@@ -209,10 +209,10 @@ public class DragDropActivity extends Activity {
 			dragged = null;
 		}
 		try {
-//			client.close();
+			// client.close();
 		} catch (Exception ignored) {
 		} finally {
-//			client = null;
+			// client = null;
 		}
 	}
 }
