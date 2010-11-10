@@ -71,18 +71,15 @@ public class DeviceListActivity extends Activity {
 	};
 
 	public void onStart() {
-		Log.v("KONRAD", "invoked the 'onStart' method");
 		super.onStart();
 		btadapter = BluetoothAdapter.getDefaultAdapter();
 		if (btadapter == null) {
-			Log.v("KONRAD", "adapter == null");
 			/* uh-oh.. no bluetooth module found! */
 			Toast.makeText(this, "Sorry, no bluetooth module found!",
 					Toast.LENGTH_SHORT);
 			/* terminate the activity */
 			finish();
 		} else {
-			Log.v("KONRAD", "adapter != null");
 			if (!btadapter.isEnabled()) {
 				startActivityForResult(new Intent(
 						BluetoothAdapter.ACTION_REQUEST_ENABLE),
