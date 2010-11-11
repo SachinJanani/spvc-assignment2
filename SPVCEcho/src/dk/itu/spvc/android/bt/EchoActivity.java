@@ -108,6 +108,7 @@ public class EchoActivity extends Activity {
 	public void onStart() {
 		super.onStart();
 		btadapter = BluetoothAdapter.getDefaultAdapter();
+		responseTextView = (TextView) findViewById(R.id.ResponseTextView);
 		if (btadapter == null) {
 			/* uh-oh.. no bluetooth module found! */
 			Toast.makeText(this, "Sorry, no bluetooth module found!",
@@ -230,7 +231,12 @@ public class EchoActivity extends Activity {
 				BufferedReader bufReader = new BufferedReader(
 						new InputStreamReader(socket.getInputStream()));
 				final String echoed = bufReader.readLine();
-				appendToResponseView(echoed);
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						appendToResponseView("Sent >> " + echoed);
+					}
+				});
 			} catch (IOException e) {
 				Log.e("KONRAD", "Failed to create client socket...");
 				e.printStackTrace();
