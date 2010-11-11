@@ -93,8 +93,8 @@ public class EchoActivity extends Activity {
 	}
 
 	public void selectServerDevice(View view) {
-		Intent intent = new Intent(this, DeviceListActivity.class);
-		this.startActivityForResult(intent, REQUEST_CONNECT_DEVICE);
+		startActivityForResult(new Intent(this, DeviceListActivity.class),
+				REQUEST_CONNECT_DEVICE);
 	}
 
 	@Override
@@ -178,6 +178,7 @@ public class EchoActivity extends Activity {
 				// declare a socket
 				BluetoothSocket clientSocket = null;
 				try {
+					Log.w("KONRAD", "Try to accept client...");
 					clientSocket = socket.accept();
 					Log.w("KONRAD", "Accepted a new connection: "
 							+ clientSocket);
@@ -222,6 +223,7 @@ public class EchoActivity extends Activity {
 			try {
 				BluetoothSocket socket = device
 						.createRfcommSocketToServiceRecord(EchoServiceUUID);
+				socket.connect();
 				socket.getOutputStream().write(
 						(message + "\r\n").getBytes("UTF-8"));
 				socket.getOutputStream().flush();
@@ -230,7 +232,7 @@ public class EchoActivity extends Activity {
 				final String echoed = bufReader.readLine();
 				appendToResponseView(echoed);
 			} catch (IOException e) {
-				Log.d("KONRAD", "Failed to create client socket..");
+				Log.e("KONRAD", "Failed to create client socket...");
 				e.printStackTrace();
 			} finally {
 				if (socket != null) {
