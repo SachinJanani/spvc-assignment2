@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+<Button 
+    android:layout_height="wrap_content" 
+    android:text="Start Server" 
+    android:layout_width="fill_parent" 
+    android:onClick="startServer" 
+    android:id="@+id/StartServerButton"></Button>
+<Button 
+    android:layout_height="wrap_content" 
+    android:layout_width="fill_parent" 
+    android:text="Select server device" 
+    android:onClick="selectServerDevice" 
+    android:id="@+id/SelectDeviceButton"></Button>
+<Button 
+    android:layout_height="wrap_content" 
+    android:id="@+id/StopServerButton" 
+    android:text="Stop server" 
+    android:layout_width="fill_parent" 
+    android:visibility="invisible" 
+    android:onClick="stopServer"></Button>
+<EditText 
+    android:layout_height="wrap_content" 
+    android:layout_width="fill_parent" 
+    android:id="@+id/SendEditText" 
+    android:visibility="gone"></EditText>
+<Button 
+    android:layout_height="wrap_content" 
+    android:onClick="sendMessage" 
+    android:text="Send" 
+    android:layout_width="fill_parent" 
+    android:visibility="gone" 
+    android:id="@+id/SendButton"></Button>
+<TextView 
+    android:layout_height="wrap_content" 
+    android:layout_width="fill_parent" 
+    android:id="@+id/ResponseTextView" 
+    android:textSize="18sp" 
+    android:visibility="invisible"></TextView>
+</LinearLayout>
