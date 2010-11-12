@@ -2,7 +2,6 @@ package dk.itu.spvc.bliploc;
 
 import java.util.Timer;
 import java.util.TimerTask;
-
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -30,18 +29,9 @@ public class Main extends Activity {
 	BluetoothAdapter btadapter;
 	/* view adapter for the list of devices */
 	ArrayAdapter<String> devicesArrayAdapter;
-	
-	
-	
+	ArrayAdapter<String> updatesAdapter;
+	Button updateButton;
 
-	public void startDiscovery(View view) {
-		if (btadapter.isDiscovering()) {
-			btadapter.cancelDiscovery();
-		}
-		btadapter.startDiscovery();
-		startDiscoveryButton.setEnabled(false);
-	}
-	
 	/** Emil End */
 	
     /** Called when the activity is first created. */
@@ -68,7 +58,6 @@ public class Main extends Activity {
     
 	public void onStart() {
 		super.onStart();
-		
 		btadapter = BluetoothAdapter.getDefaultAdapter();
 		if (btadapter == null) {
 			/* uh-oh.. no bluetooth module found! */
@@ -85,54 +74,21 @@ public class Main extends Activity {
 				setup();
 			}
 		}
+	}
+	
+		
 		
 		// Initialize Device Discovery
 		
-	    int delay = 30000;   // delay for 30 sec.
-	    int interval = 1000;  // iterate every sec.
-	    Timer timer = new Timer();
+//	    int delay = 30000;   // delay for 30 sec.
+//	    int interval = 1000;  // iterate every sec.
+//	    Timer timer = new Timer();
 	    
-	    timer.scheduleAtFixedRate(new TimerTask() {
-
-			@Override
-			public void run() {
-				
-				BroadcastReceiver discoveryReceiver = new BroadcastReceiver() {
-					@Override
-					public void onReceive(Context context, Intent intent) {
-						/* do something with the intent here */
-						String action = intent.getAction();
-						if (action.equals(BluetoothDevice.ACTION_FOUND)) {
-							BluetoothDevice device = intent
-									.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-							if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-								devicesArrayAdapter.add(device.getName() + "\n"
-										+ device.getAddress());
-							}
-							String name = device.getName();
-							TextView locationTextView = (TextView) findViewById(R.id.DevicesListView);
-							if (name != null && name.matches("ITU-.*")) {
-								locationTextView.setText(name);
-							} else {
-								locationTextView.setText("unknown");
-							}
-						} else if (action
-								.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
-							startDiscoveryButton.setEnabled(true);
-						}
-					}
-					
-				};
-				
-			}
-	    }, delay, interval);
-	}
-	
+//	    timer.scheduleAtFixedRate(new TimerTask() {
 
 	private void setup() {
 		for (BluetoothDevice device : btadapter.getBondedDevices()) {
-			devicesArrayAdapter.add(device.getName() + "\n"
-					+ device.getAddress());
+			updatesAdapter.add(device.getName() + "\n" + device.getAddress());
 		}
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
 		registerReceiver(discoveryReceiver, filter);
@@ -141,6 +97,43 @@ public class Main extends Activity {
 	}
 	
 
-	/** Emil End */
+	/**
+	 * BlipNode Discovery
+	 */
+	public void startDiscovery(View view) {
+		if (btadapter.isDiscovering()) {
+			btadapter.cancelDiscovery();
+		}
+		btadapter.startDiscovery();
+		updateButton.setEnabled(false);
+	}
+
+	BroadcastReceiver discoveryReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			/* do something with the intent here */
+			String action = intent.getAction();
+			if (action.equals(BluetoothDevice.ACTION_FOUND)) {
+				BluetoothDevice device = intent
+						.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+				if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+					updatesAdapter.add(device.getName() + "\n"
+							+ device.getAddress());
+					String name = device.getName();
+					TextView locationTextView = (TextView) findViewById(R.id.DevicesListView);
+					if (name != null && name.matches("ITU-.*")) {
+						locationTextView.setText(name);
+					} else {
+						locationTextView.setText("unknown");
+					}
+				}
+			} else if (action
+					.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
+				updateButton.setEnabled(true);
+			}
+		}
+	};
+
+
 
 }
