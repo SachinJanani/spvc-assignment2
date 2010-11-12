@@ -1,7 +1,5 @@
 package dk.itu.spvc.bliploc;
 
-import java.util.Timer;
-import java.util.TimerTask;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -10,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -19,12 +16,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class Main extends Activity {
-	
+
 	/** Emil Start */
-	
+
 	/* used when requesting the bluetooth-enabling activity */
 	static final int REQUEST_BLUETOOTH_ENABLE = 1;
-		Button startDiscoveryButton;
+	Button startDiscoveryButton;
 	/* the local bluetooth adapter */
 	BluetoothAdapter btadapter;
 	/* view adapter for the list of devices */
@@ -33,29 +30,28 @@ public class Main extends Activity {
 	Button updateButton;
 
 	/** Emil End */
-	
-    /** Called when the activity is first created. */
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-        
-        /** Emil Start */
-        
+
+	/** Called when the activity is first created. */
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
+
+		/** Emil Start */
+
 		/* create the list view adapter */
 		devicesArrayAdapter = new ArrayAdapter<String>(this,
 				R.layout.device_name);
-		
+
 		/* get a reference to the list */
 		ListView devicesListView = (ListView) findViewById(R.id.DevicesListView);
 		/* set the adapter */
 		devicesListView.setAdapter(devicesArrayAdapter);
 		/* get a reference to the StartDiscoveryButton */
 		startDiscoveryButton = (Button) findViewById(R.id.StartDiscoveryButton);
-        
-		
-    }
-    
+
+	}
+
 	public void onStart() {
 		super.onStart();
 		btadapter = BluetoothAdapter.getDefaultAdapter();
@@ -75,16 +71,14 @@ public class Main extends Activity {
 			}
 		}
 	}
-	
-		
-		
-		// Initialize Device Discovery
-		
-//	    int delay = 30000;   // delay for 30 sec.
-//	    int interval = 1000;  // iterate every sec.
-//	    Timer timer = new Timer();
-	    
-//	    timer.scheduleAtFixedRate(new TimerTask() {
+
+	// Initialize Device Discovery
+
+	// int delay = 30000; // delay for 30 sec.
+	// int interval = 1000; // iterate every sec.
+	// Timer timer = new Timer();
+
+	// timer.scheduleAtFixedRate(new TimerTask() {
 
 	private void setup() {
 		for (BluetoothDevice device : btadapter.getBondedDevices()) {
@@ -95,7 +89,6 @@ public class Main extends Activity {
 		filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
 		registerReceiver(discoveryReceiver, filter);
 	}
-	
 
 	/**
 	 * BlipNode Discovery
@@ -117,14 +110,12 @@ public class Main extends Activity {
 				BluetoothDevice device = intent
 						.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 				if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-					updatesAdapter.add(device.getName() + "\n"
-							+ device.getAddress());
 					String name = device.getName();
-					TextView locationTextView = (TextView) findViewById(R.id.DevicesListView);
 					if (name != null && name.matches("ITU-.*")) {
+						devicesArrayAdapter.add(device.getName() + "\n"
+								+ device.getAddress());
+						TextView locationTextView = (TextView) findViewById(R.id.MyLocation);
 						locationTextView.setText(name);
-					} else {
-						locationTextView.setText("unknown");
 					}
 				}
 			} else if (action
@@ -133,7 +124,5 @@ public class Main extends Activity {
 			}
 		}
 	};
-
-
 
 }
