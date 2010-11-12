@@ -17,39 +17,35 @@ import android.widget.Toast;
 
 public class Main extends Activity {
 
-	/** Emil Start */
-
 	/* used when requesting the bluetooth-enabling activity */
 	static final int REQUEST_BLUETOOTH_ENABLE = 1;
-	Button startDiscoveryButton;
 	/* the local bluetooth adapter */
 	BluetoothAdapter btadapter;
 	/* view adapter for the list of devices */
 	ArrayAdapter<String> devicesArrayAdapter;
-	ArrayAdapter<String> updatesAdapter;
-	Button updateButton;
-
-	/** Emil End */
+	/* the layout's items */
+	Button setDiscoverable;
+	/* timer, counter */
+	private int counter;
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
-		/** Emil Start */
-
+		
+		/* initialize variables */
+		counter = 0;
+		
 		/* create the list view adapter */
 		devicesArrayAdapter = new ArrayAdapter<String>(this,
 				R.layout.device_name);
-
 		/* get a reference to the list */
 		ListView devicesListView = (ListView) findViewById(R.id.DevicesListView);
 		/* set the adapter */
 		devicesListView.setAdapter(devicesArrayAdapter);
 		/* get a reference to the StartDiscoveryButton */
-		startDiscoveryButton = (Button) findViewById(R.id.StartDiscoveryButton);
-
+		setDiscoverable = (Button) findViewById(R.id.SetDiscoverable);
 	}
 
 	public void onStart() {
@@ -72,17 +68,10 @@ public class Main extends Activity {
 		}
 	}
 
-	// Initialize Device Discovery
-
-	// int delay = 30000; // delay for 30 sec.
-	// int interval = 1000; // iterate every sec.
-	// Timer timer = new Timer();
-
-	// timer.scheduleAtFixedRate(new TimerTask() {
-
 	private void setup() {
+		// TODO: do we need that 'for loop'?
 		for (BluetoothDevice device : btadapter.getBondedDevices()) {
-			updatesAdapter.add(device.getName() + "\n" + device.getAddress());
+			devicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
 		}
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
 		registerReceiver(discoveryReceiver, filter);
@@ -90,15 +79,22 @@ public class Main extends Activity {
 		registerReceiver(discoveryReceiver, filter);
 	}
 
+	// Initialize Device Discovery
+	// int delay = 30000; // delay for 30 sec.
+	// int interval = 1000; // iterate every sec.
+	// Timer timer = new Timer();
+	// timer.scheduleAtFixedRate(new TimerTask() {
+
 	/**
 	 * BlipNode Discovery
 	 */
+	// TODO: this stuff goes to the Timer 
+	// TODO: the Timer also checks the Counter
 	public void startDiscovery(View view) {
 		if (btadapter.isDiscovering()) {
 			btadapter.cancelDiscovery();
 		}
 		btadapter.startDiscovery();
-		updateButton.setEnabled(false);
 	}
 
 	BroadcastReceiver discoveryReceiver = new BroadcastReceiver() {
@@ -112,15 +108,16 @@ public class Main extends Activity {
 				if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
 					String name = device.getName();
 					if (name != null && name.matches("ITU-.*")) {
-						devicesArrayAdapter.add(device.getName() + "\n"
-								+ device.getAddress());
+//						devicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
 						TextView locationTextView = (TextView) findViewById(R.id.MyLocation);
 						locationTextView.setText(name);
+						
 					}
 				}
 			} else if (action
 					.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
-				updateButton.setEnabled(true);
+				// TODO: add 1 to the Counter?
+				counter++;
 			}
 		}
 	};
