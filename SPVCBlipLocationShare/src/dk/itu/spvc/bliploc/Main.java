@@ -1,27 +1,39 @@
 package dk.itu.spvc.bliploc;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import dk.itu.android.bluetooth.BluetoothAdapter;
+import dk.itu.android.bluetooth.BluetoothDevice;
+import dk.itu.android.bluetooth.BluetoothServerSocket;
+import dk.itu.android.bluetooth.BluetoothSocket;
 import dk.itu.spvc.bliploc.provider.BlipLocationUtil;
 
 public class Main extends Activity {
 
 	/* used when requesting the bluetooth-enabling activity */
 	static final int REQUEST_BLUETOOTH_ENABLE = 1;
+	/* request to make the device discoverable */
+	static final int REQUEST_ENABLE_DISCOVERABLE = 2;
+	/* request to select a device to connect to */
+	static final int REQUEST_CONNECT_DEVICE = 3;
 	/* the local bluetooth adapter */
 	BluetoothAdapter btadapter;
 	/* view adapter for the list of devices */
@@ -33,13 +45,21 @@ public class Main extends Activity {
 	Button setDiscoverable;
 	/* timer, counter */
 	private MyTimer timer;
+	/* the server instance */
+	Server server;
+	/* the client instance */
+	Client client;
+	/* the service UUID and name */
+	static final UUID EchoServiceUUID = UUID
+			.fromString("419bbc68-c365-4c5e-8793-5ebff85b908c");
+	static final String EchoServiceName = "SPVCBlipLocation";
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		
+
 		/* initialize the Timer */
 		timer = new MyTimer();
 
@@ -84,7 +104,8 @@ public class Main extends Activity {
 						Toast.LENGTH_SHORT);
 				finish();
 			}
-
+		} else if (REQUEST_ENABLE_DISCOVERABLE == requestCode) {
+			new Thread(server).start();
 		}
 	}
 
@@ -100,10 +121,20 @@ public class Main extends Activity {
 		registerReceiver(discoveryReceiver, filter);
 	}
 
-	/**
-	 * BlipNode Discovery
-	 */
+	public void setDiscoverable(View view) {
+		this.server = new Server();
+		startActivityForResult(new Intent(
+				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE),
+				REQUEST_ENABLE_DISCOVERABLE);
+	}
+
+	public void sync() {
+		Log.d("KONRAD", "!!! Synchronizing...");
+	}
+
+	/* BlipNode Discovery */
 	public void startDiscovery() {
+		Log.i("KONRAD", "Discovering...");
 		if (btadapter.isDiscovering()) {
 			btadapter.cancelDiscovery();
 		}
@@ -120,7 +151,8 @@ public class Main extends Activity {
 						.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 				if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
 					String name = device.getName();
-					if (name != null && name.matches("ITU-.*")) {
+					Log.i("KONRAD", "Name: " + name);
+					if (name != null) { // && name.matches("ITU-.*")) {
 						// devicesArrayAdapter.add(device.getName() + "\n" +
 						// device.getAddress());
 						TextView locationTextView = (TextView) findViewById(R.id.MyLocation);
@@ -130,20 +162,91 @@ public class Main extends Activity {
 				}
 			} else if (action
 					.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
-				//
+				Log.i("KONRAD", "Finished discovery!");
 			}
 		}
 	};
 
-	/**
-	 * The Timer
-	 */
-	class MyTimer {
+	/* SERVER */
+	private class Server implements Runnable {
+		boolean running = true;
+		BluetoothServerSocket socket = null;
+
+		public void run() {
+			try {
+				socket = btadapter.listenUsingRfcommWithServiceRecord(
+						EchoServiceName, EchoServiceUUID);
+			} catch (IOException e) {
+				running = false;
+			}
+			while (running) {
+				BluetoothSocket clientSocket = null;
+				try {
+					clientSocket = socket.accept();
+					BufferedReader bufReader = new BufferedReader(
+							new InputStreamReader(clientSocket.getInputStream()));
+					final String line = bufReader.readLine().trim();
+					clientSocket.getOutputStream().write(
+							(">" + line + "\r\n").getBytes("UTF-8"));
+					clientSocket.getOutputStream().flush();
+				} catch (Exception e) {
+					Log.e("Server", "Exception in server loop", e);
+				} finally {
+					if (clientSocket != null) {
+						try {
+							clientSocket.close();
+						} catch (Exception ignored) {
+							ignored.printStackTrace();
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/* CLIENT */
+	private class Client implements Runnable {
+		BluetoothDevice device;
+		BluetoothSocket socket;
+		String message;
+
+		public Client(String serverDeviceAddress) {
+			device = btadapter.getRemoteDevice(serverDeviceAddress);
+		}
+
+		public void run() {
+			try {
+				BluetoothSocket socket = device
+						.createRfcommSocketToServiceRecord(EchoServiceUUID);
+				socket.connect();
+				socket.getOutputStream().write(
+						(message + "\r\n").getBytes("UTF-8"));
+				socket.getOutputStream().flush();
+				BufferedReader bufReader = new BufferedReader(
+						new InputStreamReader(socket.getInputStream()));
+				final String echoed = bufReader.readLine();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				if (socket != null) {
+					try {
+						socket.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+
+	/* The Timer */
+	private class MyTimer {
 
 		int intervalCount = 0;
 		int initCount = 1;
 
 		private void execute() throws Exception {
+			Log.i("KONRAD", "Timer called!");
 			int initialDelay = 1000; // start after 1 second
 			int period = 10000; // repeat every 30 seconds
 			Timer timer = new Timer();
@@ -159,7 +262,7 @@ public class Main extends Activity {
 					if (intervalCount == 5) {
 						intervalCount = 0;
 						initCount++;
-						// TODO: synchronization
+						sync();
 					}
 
 				}
