@@ -39,7 +39,7 @@ public class Main extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
+		
 		/* initialize the Timer */
 		timer = new MyTimer();
 
@@ -99,12 +99,6 @@ public class Main extends Activity {
 		filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
 		registerReceiver(discoveryReceiver, filter);
 	}
-
-	// Initialize Device Discovery
-	// int delay = 30000; // delay for 30 sec.
-	// int interval = 1000; // iterate every sec.
-	// Timer timer = new Timer();
-	// timer.scheduleAtFixedRate(new TimerTask() {
 
 	/**
 	 * BlipNode Discovery
