@@ -1,7 +1,5 @@
 package dk.itu.spvc.bliploc;
 
-import android.bluetooth.BluetoothClass.Device;
-import android.content.BroadcastReceiver;
 
 public class Threads extends Thread {
 	
