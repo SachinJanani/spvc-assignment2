@@ -1,6 +1,8 @@
 package dk.itu.spvc.bliploc;
 
-import dk.itu.spvc.bliploc.provider.BlipLocationUtil;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -9,12 +11,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import dk.itu.spvc.bliploc.provider.BlipLocationUtil;
 
 public class Main extends Activity {
 
@@ -30,17 +32,17 @@ public class Main extends Activity {
 	/* the layout's items */
 	Button setDiscoverable;
 	/* timer, counter */
-	private int counter;
+	private MyTimer timer;
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		
-		/* initialize variables */
-		counter = 0;
-		
+
+		/* initialize the Timer */
+		timer = new MyTimer();
+
 		/* create the list view adapter */
 		devicesArrayAdapter = new ArrayAdapter<String>(this,
 				R.layout.device_name);
@@ -72,10 +74,25 @@ public class Main extends Activity {
 		}
 	}
 
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (REQUEST_BLUETOOTH_ENABLE == requestCode) {
+			if (RESULT_OK == resultCode) {
+				setup();
+			} else {
+				Toast.makeText(this,
+						"Cannot do anything if bluetooth is disabled :(",
+						Toast.LENGTH_SHORT);
+				finish();
+			}
+
+		}
+	}
+
 	private void setup() {
-		// TODO: do we need that 'for loop'?
-		for (BluetoothDevice device : btadapter.getBondedDevices()) {
-			devicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+		try {
+			timer.execute();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
 		registerReceiver(discoveryReceiver, filter);
@@ -92,9 +109,7 @@ public class Main extends Activity {
 	/**
 	 * BlipNode Discovery
 	 */
-	// TODO: this stuff goes to the Timer 
-	// TODO: the Timer also checks the Counter
-	public void startDiscovery(View view) {
+	public void startDiscovery() {
 		if (btadapter.isDiscovering()) {
 			btadapter.cancelDiscovery();
 		}
@@ -112,7 +127,8 @@ public class Main extends Activity {
 				if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
 					String name = device.getName();
 					if (name != null && name.matches("ITU-.*")) {
-//						devicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+						// devicesArrayAdapter.add(device.getName() + "\n" +
+						// device.getAddress());
 						TextView locationTextView = (TextView) findViewById(R.id.MyLocation);
 						locationTextView.setText(name);
 						utils.insertMyLocation(context, btadapter, name);
@@ -120,9 +136,41 @@ public class Main extends Activity {
 				}
 			} else if (action
 					.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
-				counter++;
+				//
 			}
 		}
 	};
+
+	/**
+	 * The Timer
+	 */
+	class MyTimer {
+
+		int intervalCount = 0;
+		int initCount = 1;
+
+		private void execute() throws Exception {
+			int initialDelay = 1000; // start after 1 second
+			int period = 30000; // repeat every 30 seconds
+			Timer timer = new Timer();
+			timer.scheduleAtFixedRate(new TimerTask() {
+				public void run() {
+					// Increment the intervalCounter and print the count
+					intervalCount++;
+					// Run the Update Procedure
+					startDiscovery();
+					// If the intervalCount has reached five, then run method
+					// "sync()"
+					// and increment the initCount.
+					if (intervalCount == 5) {
+						intervalCount = 0;
+						initCount++;
+						// TODO: synchronization
+					}
+
+				}
+			}, initialDelay, period);
+		}
+	}
 
 }
