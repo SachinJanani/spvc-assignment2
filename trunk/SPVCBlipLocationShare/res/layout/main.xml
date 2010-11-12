@@ -22,7 +22,7 @@
 </ListView>
 
 <Button 
-	android:id="@+id/StartDiscoveryButton" 
+	android:id="@+id/SetDiscoverable" 
 	android:layout_width="wrap_content" 
 	android:layout_height="wrap_content" 
 	android:onClick="startDiscovery" 
