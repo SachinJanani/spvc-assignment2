@@ -1,5 +1,6 @@
 package dk.itu.spvc.bliploc;
 
+import dk.itu.spvc.bliploc.provider.BlipLocationUtil;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -23,6 +24,9 @@ public class Main extends Activity {
 	BluetoothAdapter btadapter;
 	/* view adapter for the list of devices */
 	ArrayAdapter<String> devicesArrayAdapter;
+	/* BlipLocation stuff */
+	BlipLocation myLocation;
+	BlipLocationUtil utils;
 	/* the layout's items */
 	Button setDiscoverable;
 	/* timer, counter */
@@ -111,12 +115,11 @@ public class Main extends Activity {
 //						devicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
 						TextView locationTextView = (TextView) findViewById(R.id.MyLocation);
 						locationTextView.setText(name);
-						
+						utils.insertMyLocation(context, btadapter, name);
 					}
 				}
 			} else if (action
 					.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
-				// TODO: add 1 to the Counter?
 				counter++;
 			}
 		}
