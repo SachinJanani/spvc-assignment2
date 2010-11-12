@@ -151,7 +151,7 @@ public class Main extends Activity {
 
 		private void execute() throws Exception {
 			int initialDelay = 1000; // start after 1 second
-			int period = 30000; // repeat every 30 seconds
+			int period = 10000; // repeat every 30 seconds
 			Timer timer = new Timer();
 			timer.scheduleAtFixedRate(new TimerTask() {
 				public void run() {
