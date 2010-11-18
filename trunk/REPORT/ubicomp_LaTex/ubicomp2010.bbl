@@ -1,0 +1,22 @@
+\begin{thebibliography}{1}
+
+\bibitem{acrobat}
+{Adobe Acrobat Reader}.
+\newblock \small{\url{http://get.adobe.com/reader/}}.
+
+\bibitem{example-journal}
+{Anderson, R. E.}
+\newblock Social impacts of computing: Codes of professional ethics.
+\newblock {\em Social Science Computing Review}, 10(2):453--469, 1992.
+
+\bibitem{example-abstracts}
+{Mather, B.D.}
+\newblock {Making up titles for conference papers}.
+\newblock In {\em {Ext. Abstracts CHI 2000}}, pages 1--2. ACM Press, 2000.
+
+\bibitem{example-conference2}
+{Zellweger, P.T., Bouvin, N.O., Jeh{\o}j, H. and Mackinlay, J.D.}
+\newblock {Fluid Annotations in an Open World}.
+\newblock In {\em Proc. Hypertext 2001}, pages 9--18. ACM Press, 2001.
+
+\end{thebibliography}
