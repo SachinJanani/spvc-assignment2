@@ -3,6 +3,8 @@ package dk.itu.spvc.bliploc;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -15,9 +17,9 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 import dk.itu.android.bluetooth.BluetoothAdapter;
@@ -25,8 +27,11 @@ import dk.itu.android.bluetooth.BluetoothDevice;
 import dk.itu.android.bluetooth.BluetoothServerSocket;
 import dk.itu.android.bluetooth.BluetoothSocket;
 import dk.itu.spvc.bliploc.provider.BlipLocationUtil;
+import dk.itu.spvc.bliploc.provider.BlipLocationUtil.BlipLocationDO;
 
 public class Main extends Activity {
+
+	static final String TAG = "APP";
 
 	/* used when requesting the bluetooth-enabling activity */
 	static final int REQUEST_BLUETOOTH_ENABLE = 1;
@@ -36,11 +41,10 @@ public class Main extends Activity {
 	static final int REQUEST_CONNECT_DEVICE = 3;
 	/* the local bluetooth adapter */
 	BluetoothAdapter btadapter;
-	/* view adapter for the list of devices */
-	ArrayAdapter<String> devicesArrayAdapter;
 	/* BlipLocation stuff */
-	BlipLocation myLocation;
+	String myLocation;
 	BlipLocationUtil utils;
+	SimpleCursorAdapter scadapter;
 	/* the layout's items */
 	Button setDiscoverable;
 	/* timer, counter */
@@ -49,6 +53,8 @@ public class Main extends Activity {
 	Server server;
 	/* the client instance */
 	Client client;
+	/* view adapter for the list of devices */
+	ArrayList<String> devices;
 	/* the service UUID and name */
 	static final UUID EchoServiceUUID = UUID
 			.fromString("419bbc68-c365-4c5e-8793-5ebff85b908c");
@@ -60,16 +66,14 @@ public class Main extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		/* initialize the Timer */
+		/* initialize vars */
 		timer = new MyTimer();
-
-		/* create the list view adapter */
-		devicesArrayAdapter = new ArrayAdapter<String>(this,
-				R.layout.device_name);
+		utils = new BlipLocationUtil();
+		devices = new ArrayList<String>();
 		/* get a reference to the list */
 		ListView devicesListView = (ListView) findViewById(R.id.DevicesListView);
 		/* set the adapter */
-		devicesListView.setAdapter(devicesArrayAdapter);
+		devicesListView.setAdapter(utils.standardListAdapter(this));
 		/* get a reference to the StartDiscoveryButton */
 		setDiscoverable = (Button) findViewById(R.id.SetDiscoverable);
 	}
@@ -105,6 +109,7 @@ public class Main extends Activity {
 				finish();
 			}
 		} else if (REQUEST_ENABLE_DISCOVERABLE == requestCode) {
+			setDiscoverable.setEnabled(false);
 			new Thread(server).start();
 		}
 	}
@@ -129,12 +134,16 @@ public class Main extends Activity {
 	}
 
 	public void sync() {
-		Log.d("KONRAD", "!!! Synchronizing...");
+		Log.d(TAG, "Synchronizing...");
+		for (String addr : devices) {
+			this.client = new Client(addr);
+			new Thread(client).start();
+		}
 	}
 
 	/* BlipNode Discovery */
 	public void startDiscovery() {
-		Log.i("KONRAD", "Discovering...");
+		Log.i(TAG, "Discovering...");
 		if (btadapter.isDiscovering()) {
 			btadapter.cancelDiscovery();
 		}
@@ -151,18 +160,22 @@ public class Main extends Activity {
 						.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 				if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
 					String name = device.getName();
-					Log.i("KONRAD", "Name: " + name);
-					if (name != null) { // && name.matches("ITU-.*")) {
-						// devicesArrayAdapter.add(device.getName() + "\n" +
-						// device.getAddress());
-						TextView locationTextView = (TextView) findViewById(R.id.MyLocation);
-						locationTextView.setText(name);
-						utils.insertMyLocation(context, btadapter, name);
+					if (name != null) {
+						if (name.matches("ITU-.*")) {
+							Log.d(TAG, "Found a location!");
+							TextView locationTextView = (TextView) findViewById(R.id.MyLocation);
+							locationTextView.setText(name);
+							utils.insertMyLocation(context, btadapter, name);
+							myLocation = name;
+						} else {
+							Log.d(TAG, "Found a device!");
+							devices.add(device.getAddr());
+						}
 					}
 				}
 			} else if (action
 					.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
-				Log.i("KONRAD", "Finished discovery!");
+				Log.i(TAG, "Finished discovery!");
 			}
 		}
 	};
@@ -171,6 +184,18 @@ public class Main extends Activity {
 	private class Server implements Runnable {
 		boolean running = true;
 		BluetoothServerSocket socket = null;
+
+		public void stop() {
+			running = false;
+			if (socket != null) {
+				try {
+					socket.close();
+					socket = null;
+				} catch (Exception ignored) {
+				}
+			}
+			setDiscoverable.setEnabled(true);
+		}
 
 		public void run() {
 			try {
@@ -185,7 +210,10 @@ public class Main extends Activity {
 					clientSocket = socket.accept();
 					BufferedReader bufReader = new BufferedReader(
 							new InputStreamReader(clientSocket.getInputStream()));
-					final String line = bufReader.readLine().trim();
+					String line;
+					while (!(line = bufReader.readLine().trim()).equals("")) {
+						Log.i(TAG, "Line received by the server");
+					}
 					clientSocket.getOutputStream().write(
 							(">" + line + "\r\n").getBytes("UTF-8"));
 					clientSocket.getOutputStream().flush();
@@ -199,6 +227,7 @@ public class Main extends Activity {
 							ignored.printStackTrace();
 						}
 					}
+					stop();
 				}
 			}
 		}
@@ -208,10 +237,11 @@ public class Main extends Activity {
 	private class Client implements Runnable {
 		BluetoothDevice device;
 		BluetoothSocket socket;
+		Collection<BlipLocationDO> db;
 		String message;
 
-		public Client(String serverDeviceAddress) {
-			device = btadapter.getRemoteDevice(serverDeviceAddress);
+		public Client(String addr) {
+			device = btadapter.getRemoteDevice(addr);
 		}
 
 		public void run() {
@@ -219,12 +249,18 @@ public class Main extends Activity {
 				BluetoothSocket socket = device
 						.createRfcommSocketToServiceRecord(EchoServiceUUID);
 				socket.connect();
-				socket.getOutputStream().write(
-						(message + "\r\n").getBytes("UTF-8"));
+				Context context = getApplicationContext();
+				db = utils.loadAll(context);
+				for (BlipLocationDO bl : db) {
+					message = getMessage(bl);
+					socket.getOutputStream().write(
+							(message + "\r\n").getBytes("UTF-8"));
+				}
 				socket.getOutputStream().flush();
 				BufferedReader bufReader = new BufferedReader(
 						new InputStreamReader(socket.getInputStream()));
 				final String echoed = bufReader.readLine();
+				Log.d(TAG, "Echoed: " + echoed);
 			} catch (IOException e) {
 				e.printStackTrace();
 			} finally {
@@ -246,7 +282,7 @@ public class Main extends Activity {
 		int initCount = 1;
 
 		private void execute() throws Exception {
-			Log.i("KONRAD", "Timer called!");
+			Log.w(TAG, "Timer called!");
 			int initialDelay = 1000; // start after 1 second
 			int period = 10000; // repeat every 30 seconds
 			Timer timer = new Timer();
@@ -259,7 +295,7 @@ public class Main extends Activity {
 					// If the intervalCount has reached five, then run method
 					// "sync()"
 					// and increment the initCount.
-					if (intervalCount == 5) {
+					if (intervalCount == 1) { // 5) {
 						intervalCount = 0;
 						initCount++;
 						sync();
@@ -268,6 +304,11 @@ public class Main extends Activity {
 				}
 			}, initialDelay, period);
 		}
+	}
+
+	private String getMessage(BlipLocationDO location) {
+		return location.getLocation() + "|" + location.getBtaddr() + "|"
+				+ location.getName() + "|" + location.getTimestamp();
 	}
 
 }
