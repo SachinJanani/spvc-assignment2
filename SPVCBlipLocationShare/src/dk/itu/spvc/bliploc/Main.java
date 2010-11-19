@@ -65,6 +65,7 @@ public class Main extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+		dk.itu.android.bluetooth.BluetoothAdapter.SetContext(this);
 
 		/* initialize vars */
 		timer = new MyTimer();
@@ -115,6 +116,7 @@ public class Main extends Activity {
 	}
 
 	private void setup() {
+		fakeLocation("ITU-4D");
 		try {
 			timer.execute();
 		} catch (Exception e) {
@@ -127,7 +129,7 @@ public class Main extends Activity {
 	}
 
 	public void setDiscoverable(View view) {
-		this.server = new Server();
+		this.server = new Server(getApplicationContext());
 		startActivityForResult(new Intent(
 				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE),
 				REQUEST_ENABLE_DISCOVERABLE);
@@ -135,9 +137,11 @@ public class Main extends Activity {
 
 	public void sync() {
 		Log.d(TAG, "Synchronizing...");
-		for (String addr : devices) {
-			this.client = new Client(addr);
-			new Thread(client).start();
+		synchronized (devices) {
+			for (String addr : devices) {
+				this.client = new Client(addr, getApplicationContext());
+				new Thread(client).start();
+			}
 		}
 	}
 
@@ -162,13 +166,21 @@ public class Main extends Activity {
 					String name = device.getName();
 					if (name != null) {
 						if (name.matches("ITU-.*")) {
-							Log.d(TAG, "Found a location!");
+							Log.v(TAG, "Found a location!");
 							TextView locationTextView = (TextView) findViewById(R.id.MyLocation);
 							locationTextView.setText(name);
 							utils.insertMyLocation(context, btadapter, name);
 							myLocation = name;
 						} else {
-							Log.d(TAG, "Found a device!");
+							Log.v(TAG, "Found a phone!");
+							synchronized (devices) {
+								devices.add(device.getAddr());
+							}
+						}
+					} else {
+						Log.v(TAG, "Found a phone!");
+						name = "unknown";
+						synchronized (devices) {
 							devices.add(device.getAddr());
 						}
 					}
@@ -184,17 +196,12 @@ public class Main extends Activity {
 	private class Server implements Runnable {
 		boolean running = true;
 		BluetoothServerSocket socket = null;
+		Collection<BlipLocationDO> db;
+		String message;
+		Context context;
 
-		public void stop() {
-			running = false;
-			if (socket != null) {
-				try {
-					socket.close();
-					socket = null;
-				} catch (Exception ignored) {
-				}
-			}
-			setDiscoverable.setEnabled(true);
+		public Server(Context context) {
+			this.context = context;
 		}
 
 		public void run() {
@@ -211,11 +218,21 @@ public class Main extends Activity {
 					BufferedReader bufReader = new BufferedReader(
 							new InputStreamReader(clientSocket.getInputStream()));
 					String line;
+					String[] temp;
 					while (!(line = bufReader.readLine().trim()).equals("")) {
-						Log.i(TAG, "Line received by the server");
+						temp = line.split("\\|");
+						Log.i(TAG, "Line received by the server: " + line);
+						utils.insertNewLocation(context, temp[1], temp[2], temp[0], Long.parseLong(temp[3]));
 					}
-					clientSocket.getOutputStream().write(
-							(">" + line + "\r\n").getBytes("UTF-8"));
+					Log.i(TAG, "Finished receiving");
+					db = utils.loadAll(context);
+					for (BlipLocationDO bl : db) {
+						message = getMessage(bl);
+						Log.i(TAG, "Sending back: " + message);
+						clientSocket.getOutputStream().write(
+								(message + "\r\n").getBytes("UTF-8"));
+					}
+					clientSocket.getOutputStream().write(("\r\n").getBytes("UTF-8"));
 					clientSocket.getOutputStream().flush();
 				} catch (Exception e) {
 					Log.e("Server", "Exception in server loop", e);
@@ -227,7 +244,6 @@ public class Main extends Activity {
 							ignored.printStackTrace();
 						}
 					}
-					stop();
 				}
 			}
 		}
@@ -239,9 +255,11 @@ public class Main extends Activity {
 		BluetoothSocket socket;
 		Collection<BlipLocationDO> db;
 		String message;
+		Context context;
 
-		public Client(String addr) {
+		public Client(String addr, Context context) {
 			device = btadapter.getRemoteDevice(addr);
+			this.context = context;
 		}
 
 		public void run() {
@@ -249,19 +267,25 @@ public class Main extends Activity {
 				BluetoothSocket socket = device
 						.createRfcommSocketToServiceRecord(EchoServiceUUID);
 				socket.connect();
-				Context context = getApplicationContext();
 				db = utils.loadAll(context);
 				for (BlipLocationDO bl : db) {
 					message = getMessage(bl);
+					Log.i(TAG, "Sending: " + message);
 					socket.getOutputStream().write(
 							(message + "\r\n").getBytes("UTF-8"));
 				}
+				socket.getOutputStream().write(("\r\n").getBytes("UTF-8"));
 				socket.getOutputStream().flush();
 				BufferedReader bufReader = new BufferedReader(
 						new InputStreamReader(socket.getInputStream()));
-				final String echoed = bufReader.readLine();
-				Log.d(TAG, "Echoed: " + echoed);
-			} catch (IOException e) {
+				String line;
+				String[] temp;
+				while (!(line = bufReader.readLine()).equals("")) {
+					Log.i(TAG, "Received back from the server: " + line);
+					temp = line.split("|");
+					utils.insertNewLocation(context, temp[1], temp[2], temp[0], Long.parseLong(temp[3]));
+				}
+			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
 				if (socket != null) {
@@ -309,6 +333,12 @@ public class Main extends Activity {
 	private String getMessage(BlipLocationDO location) {
 		return location.getLocation() + "|" + location.getBtaddr() + "|"
 				+ location.getName() + "|" + location.getTimestamp();
+	}
+	
+	private void fakeLocation(String location) {
+		utils.insertMyLocation(getApplicationContext(), btadapter, location);
+		TextView locationTextView = (TextView) findViewById(R.id.MyLocation);
+		locationTextView.setText(location);
 	}
 
 }
