@@ -10,6 +10,10 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -22,10 +26,6 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
-import dk.itu.android.bluetooth.BluetoothAdapter;
-import dk.itu.android.bluetooth.BluetoothDevice;
-import dk.itu.android.bluetooth.BluetoothServerSocket;
-import dk.itu.android.bluetooth.BluetoothSocket;
 import dk.itu.spvc.bliploc.provider.BlipLocationUtil;
 import dk.itu.spvc.bliploc.provider.BlipLocationUtil.BlipLocationDO;
 
@@ -116,7 +116,7 @@ public class Main extends Activity {
 	}
 
 	private void setup() {
-		fakeLocation("ITU-4D");
+		// fakeLocation("ITU-4D");
 		try {
 			timer.execute();
 		} catch (Exception e) {
@@ -158,6 +158,7 @@ public class Main extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			/* do something with the intent here */
+			devices = new ArrayList<String>();
 			String action = intent.getAction();
 			if (action.equals(BluetoothDevice.ACTION_FOUND)) {
 				BluetoothDevice device = intent
@@ -174,14 +175,14 @@ public class Main extends Activity {
 						} else {
 							Log.v(TAG, "Found a phone!");
 							synchronized (devices) {
-								devices.add(device.getAddr());
+								devices.add(device.getAddress());
 							}
 						}
 					} else {
 						Log.v(TAG, "Found a phone!");
 						name = "unknown";
 						synchronized (devices) {
-							devices.add(device.getAddr());
+							devices.add(device.getAddress());
 						}
 					}
 				}
@@ -222,7 +223,8 @@ public class Main extends Activity {
 					while (!(line = bufReader.readLine().trim()).equals("")) {
 						temp = line.split("\\|");
 						Log.i(TAG, "Line received by the server: " + line);
-						utils.insertNewLocation(context, temp[1], temp[2], temp[0], Long.parseLong(temp[3]));
+						utils.insertNewLocation(context, temp[1], temp[2],
+								temp[0], Long.parseLong(temp[3]));
 					}
 					Log.i(TAG, "Finished receiving");
 					db = utils.loadAll(context);
@@ -232,7 +234,8 @@ public class Main extends Activity {
 						clientSocket.getOutputStream().write(
 								(message + "\r\n").getBytes("UTF-8"));
 					}
-					clientSocket.getOutputStream().write(("\r\n").getBytes("UTF-8"));
+					clientSocket.getOutputStream().write(
+							("\r\n").getBytes("UTF-8"));
 					clientSocket.getOutputStream().flush();
 				} catch (Exception e) {
 					Log.e("Server", "Exception in server loop", e);
@@ -283,7 +286,8 @@ public class Main extends Activity {
 				while (!(line = bufReader.readLine()).equals("")) {
 					Log.i(TAG, "Received back from the server: " + line);
 					temp = line.split("|");
-					utils.insertNewLocation(context, temp[1], temp[2], temp[0], Long.parseLong(temp[3]));
+					utils.insertNewLocation(context, temp[1], temp[2], temp[0],
+							Long.parseLong(temp[3]));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -308,7 +312,7 @@ public class Main extends Activity {
 		private void execute() throws Exception {
 			Log.w(TAG, "Timer called!");
 			int initialDelay = 1000; // start after 1 second
-			int period = 10000; // repeat every 30 seconds
+			int period = 30000; // repeat every 30 seconds
 			Timer timer = new Timer();
 			timer.scheduleAtFixedRate(new TimerTask() {
 				public void run() {
@@ -319,7 +323,7 @@ public class Main extends Activity {
 					// If the intervalCount has reached five, then run method
 					// "sync()"
 					// and increment the initCount.
-					if (intervalCount == 1) { // 5) {
+					if (intervalCount == 5) {
 						intervalCount = 0;
 						initCount++;
 						sync();
@@ -334,7 +338,7 @@ public class Main extends Activity {
 		return location.getLocation() + "|" + location.getBtaddr() + "|"
 				+ location.getName() + "|" + location.getTimestamp();
 	}
-	
+
 	private void fakeLocation(String location) {
 		utils.insertMyLocation(getApplicationContext(), btadapter, location);
 		TextView locationTextView = (TextView) findViewById(R.id.MyLocation);
