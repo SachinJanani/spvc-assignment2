@@ -140,7 +140,7 @@ public class Main extends Activity {
 		synchronized (devices) {
 			for (String addr : devices) {
 				this.client = new Client(addr, getApplicationContext());
-				new Thread(client).start();
+				this.client.start();
 			}
 		}
 	}
@@ -253,7 +253,7 @@ public class Main extends Activity {
 	}
 
 	/* CLIENT */
-	private class Client implements Runnable {
+	private class Client extends Thread {
 		BluetoothDevice device;
 		BluetoothSocket socket;
 		Collection<BlipLocationDO> db;
@@ -290,7 +290,8 @@ public class Main extends Activity {
 							Long.parseLong(temp[3]));
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				this.stop();
+				// e.printStackTrace();
 			} finally {
 				if (socket != null) {
 					try {
