@@ -5,13 +5,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 import android.widget.SimpleCursorAdapter;
-import dk.itu.android.bluetooth.BluetoothAdapter;
 import dk.itu.spvc.bliploc.BlipLocation;
 import dk.itu.spvc.bliploc.R;
 
