@@ -133,7 +133,7 @@ public class DragDropScene extends AbstractScene {
 		usp = new UnistrokeProcessor(mtApp);
 
 		// Add templates to process by the unistroke processor
-		usp.addTemplate(UnistrokeGesture.V, Direction.CLOCKWISE);
+//		 usp.addTemplate(UnistrokeGesture.V, Direction.CLOCKWISE);
 
 		// If we have defined a gesture we add it
 		if (points != null && points.size() > 0) {
